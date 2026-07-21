@@ -36,12 +36,23 @@ def find_codex():
 # Models to add. Slugs must match what Merge Gateway expects.
 # `template` is a substring used to pick an existing catalog entry to clone, so
 # the new entry inherits every required field (supported_reasoning_levels, etc.).
+#
+# IMPORTANT — template choice controls the tool surface:
+#   The gpt-5.6-* codex family uses tool_mode = "code_mode_only" (the exec-cell /
+#   node_repl "code mode" runtime). Only OpenAI's own codex models can drive that
+#   surface; non-OpenAI models routed through the Gateway get handed it and can't
+#   emit the calls, so shell / apply_patch / tool_search / MCP tools never reach
+#   the model — you're left with only `thinking`, `wait`, `request_user_input`.
+#   The gpt-5.5 family has tool_mode = None: the STANDARD tool surface (plain
+#   function tools + freeform apply_patch) that third-party models can actually
+#   use. So: clone third-party models from gpt-5.5; keep genuine openai/* slugs
+#   on the codex template (real OpenAI models support code mode).
 MERGE_MODELS = [
     {
         "slug": "moonshot/kimi-k3",
         "display_name": "Kimi K3 (Merge Gateway)",
         "description": "MoonshotAI Kimi K3 via Merge Gateway.",
-        "template": "gpt-5.6-sol",
+        "template": "gpt-5.5",
     },
     {
         "slug": "openai/gpt-5.6-sol",
@@ -59,37 +70,37 @@ MERGE_MODELS = [
         "slug": "zai/glm-5.2",
         "display_name": "GLM 5.2 (Merge Gateway)",
         "description": "Z.ai GLM 5.2 via Merge Gateway.",
-        "template": "gpt-5.6-sol",
+        "template": "gpt-5.5",
     },
     {
         "slug": "anthropic/claude-opus-4-8",
         "display_name": "Claude Opus 4.8 (Merge Gateway)",
         "description": "Anthropic Claude Opus 4.8 via Merge Gateway.",
-        "template": "gpt-5.6-sol",
+        "template": "gpt-5.5",
     },
     {
         "slug": "google/gemini-3.1-pro-preview",
         "display_name": "Gemini 3.1 Pro (Merge Gateway)",
         "description": "Google Gemini 3.1 Pro via Merge Gateway.",
-        "template": "gpt-5.6-sol",
+        "template": "gpt-5.5",
     },
     {
         "slug": "deepseek/deepseek-v4-pro",
         "display_name": "DeepSeek V4 Pro (Merge Gateway)",
         "description": "DeepSeek V4 Pro via Merge Gateway.",
-        "template": "gpt-5.6-sol",
+        "template": "gpt-5.5",
     },
     {
         "slug": "xai/grok-4.5",
         "display_name": "Grok 4.5 (Merge Gateway)",
         "description": "xAI Grok 4.5 via Merge Gateway.",
-        "template": "gpt-5.6-sol",
+        "template": "gpt-5.5",
     },
     {
         "slug": "qwen/qwen3.7-max",
         "display_name": "Qwen3.7 Max (Merge Gateway)",
         "description": "Alibaba Qwen3.7 Max via Merge Gateway.",
-        "template": "gpt-5.6-sol",
+        "template": "gpt-5.5",
     },
 ]
 
