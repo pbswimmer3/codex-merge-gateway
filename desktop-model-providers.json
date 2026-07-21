@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "default_provider": "openai",
+  "providers": [
+    {
+      "id": "openai",
+      "label": "ChatGPT / OpenAI",
+      "description": "Uses your signed-in ChatGPT account"
+    },
+    {
+      "id": "merge-gateway",
+      "label": "Merge Gateway",
+      "description": "Uses [model_providers.merge-gateway] from config.toml"
+    }
+  ],
+  "model_providers": {
+    "moonshot/kimi-k3": "merge-gateway",
+    "openai/gpt-5.6-sol": "merge-gateway",
+    "openai/gpt-5.6-terra": "merge-gateway",
+    "zai/glm-5.2": "merge-gateway",
+    "anthropic/claude-opus-4-8": "merge-gateway",
+    "google/gemini-3.1-pro-preview": "merge-gateway",
+    "deepseek/deepseek-v4-pro": "merge-gateway",
+    "xai/grok-4.5": "merge-gateway",
+    "qwen/qwen3.7-max": "merge-gateway"
+  }
+}

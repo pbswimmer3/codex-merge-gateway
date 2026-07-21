@@ -1,0 +1,18 @@
+# ============================================================================
+#  Merge Gateway — snippet to merge into your ~/.codex/config.toml
+#  Do NOT replace your whole config.toml with this file; just add these pieces.
+# ============================================================================
+
+# 1) TOP-LEVEL key — point Codex at a catalog that includes your Gateway models.
+#    Replace <YOUR-USERNAME> with your macOS username (echo $USER).
+model_catalog_json = "/Users/<YOUR-USERNAME>/.codex/model-catalogs/custom.json"
+
+
+# 2) Provider definition — the Merge Gateway endpoint + which env var holds the key.
+[model_providers.merge-gateway]
+name = "Merge Gateway"
+base_url = "https://api-gateway.merge.dev/v1/openai"
+env_key = "MERGE_GATEWAY_API_KEY"
+# If model requests fail with a request-format error, uncomment the line below.
+# Merge's /v1/openai endpoint is OpenAI chat-completions style:
+# wire_api = "chat"

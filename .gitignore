@@ -1,0 +1,18 @@
+# --- Secrets & personal config: NEVER commit ---
+# dev.merge.gateway.env.plist contains your real Merge Gateway API key
+dev.merge.gateway.env.plist
+# config.toml is your personal Codex config (paths, plugins, account)
+config.toml
+
+# --- Third-party code (linked in README, not vendored) ---
+patch_chatgpt_providers.py
+
+# --- Generated / machine-specific ---
+model-catalogs/
+custom.json
+
+# --- OS / tooling cruft ---
+.DS_Store
+__pycache__/
+*.pyc
+.claude/
