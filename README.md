@@ -165,7 +165,9 @@ python3 build_catalog.py
 # Cmd+Q and reopen the app
 ```
 
-The `template` field matters: `build_catalog.py` **clones** that existing catalog entry so your new model inherits every required field (`supported_reasoning_levels`, `context_window`, etc.). Pick a template with similar capabilities.
+The `template` field matters: `build_catalog.py` **clones** that existing catalog entry so your new model inherits every required field (`supported_reasoning_levels`, `context_window`, etc.).
+
+> **⚠️ Use `gpt-5.5` as the template for non-OpenAI models — not `gpt-5.6-*`.** The `gpt-5.6-*` codex family carries `tool_mode = "code_mode_only"` (the exec-cell / node_repl "code mode" runtime). Only OpenAI's own codex models can drive that surface; a third-party model (Claude, DeepSeek, GLM, Gemini, Grok, Qwen, Kimi) cloned from it gets handed code-mode and **can't emit the calls** — so shell, `apply_patch`, `tool_search`, and MCP tools never reach the model and you're left with only `thinking` / `wait` / `request_user_input`. `gpt-5.5` has `tool_mode = None`: the standard tool surface (plain function tools + freeform `apply_patch`) that these models can actually use. Keep genuine `openai/*` slugs on the `gpt-5.6-*` template.
 
 ---
 
@@ -204,6 +206,8 @@ Each is a standalone profile file (Codex 0.134+ rejects `[profiles.x]` tables in
 | **Provider selector missing entirely** | Patch not applied or wiped by an update — re-run `patch_chatgpt_providers.py`. |
 | **`wire_api = "chat" is no longer supported`** | Change it to `wire_api = "responses"` (or drop the line — `responses` is the default). Recent Codex builds removed Chat Completions support. |
 | **Requests fail with a format error** | Ensure `wire_api = "responses"` on the provider block, then fully restart. |
+| **Only `thinking` / `wait` / `request_user_input` available — no shell, `apply_patch`, `tool_search`, or MCP tools** | The model was cloned from a `gpt-5.6-*` (code-mode) template. Re-clone from `gpt-5.5` in `build_catalog.py`, rebuild, and restart. See [Adding more models](#adding-more-models). |
+| **`reasoning_content in the thinking mode must be passed back to the API` (GLM)** | GLM's thinking mode requires echoing `reasoning_content` on each turn, which Codex's Responses client doesn't round-trip. Use a non-thinking model (DeepSeek, Kimi, Claude) — this one isn't fixable from config. |
 | **Auth errors / key not found** | Run `launchctl getenv MERGE_GATEWAY_API_KEY`. If empty, redo step 2 and fully restart the app. |
 | **`codex` not found when building catalog** | Edit `CODEX_CANDIDATES` at the top of `build_catalog.py` with the full path to your `codex` binary. |
 
