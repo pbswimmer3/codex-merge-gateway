@@ -16,6 +16,8 @@ Add this top-level key to `~/.codex/config.toml` so the app can list Gateway mod
 model_catalog_json = "/Users/<username>/.codex/model-catalogs/custom.json"
 ```
 
+The generated catalog sets `auto_review_model_override` on each Gateway entry. Codex then uses that Gateway model for automatic approval review instead of requesting the unavailable internal `openai/codex-auto-review` model.
+
 #### Make the API key available to the app
 
 macOS GUI apps do not read your shell profile, so the `export` from Configure Codex does not reach the app. Set the key at the login-session level with a LaunchAgent at `~/Library/LaunchAgents/dev.merge.gateway.env.plist`:
@@ -99,3 +101,7 @@ Add the slug to `desktop-model-providers.json` and to the `MERGE_MODELS` list in
 #### Requests fail, or `wire_api = "chat" is no longer supported`
 
 Set `wire_api = "responses"` on the `[model_providers.merge-gateway]` block (or omit it — `responses` is Codex's default). The Gateway supports the Responses API, including tool calls, at `/v1/openai/responses`. Do **not** set `wire_api = "chat"` — recent Codex builds reject it and refuse to load the config. After editing, fully quit and reopen the app.
+
+#### Tool calls fail after an approval request
+
+If the error mentions `openai/codex-auto-review`, or ends with `stream disconnected before completion` and missing `tool_call_id` responses, regenerate the catalog with `python3 build_catalog.py`, fully quit and reopen Codex, then start a new task. The generated entries set `auto_review_model_override` to a Gateway model that can service the approval review.

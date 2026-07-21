@@ -57,6 +57,8 @@ wire_api = "responses"
 
 > `wire_api = "responses"` is Codex's default and the Gateway supports it — including tool calls — at `/v1/openai/responses`. **Do not use `wire_api = "chat"`:** recent Codex builds reject it with `wire_api = "chat" is no longer supported`.
 
+> The generated Gateway model entries set `auto_review_model_override` to their own Gateway slug. This lets Codex's automatic approval reviewer use the selected Gateway model instead of requesting the internal `openai/codex-auto-review` model, which Gateway does not expose.
+
 Replace `<YOUR-USERNAME>` with your macOS username (`echo $USER`).
 
 ### 2. Make your API key available to the GUI app
@@ -165,7 +167,7 @@ python3 build_catalog.py
 # Cmd+Q and reopen the app
 ```
 
-The `template` field matters: `build_catalog.py` **clones** that existing catalog entry so your new model inherits every required field (`supported_reasoning_levels`, `context_window`, etc.).
+The `template` field matters: `build_catalog.py` **clones** that existing catalog entry so your new model inherits every required field (`supported_reasoning_levels`, `context_window`, etc.). The builder also sets `auto_review_model_override` to the Gateway slug, so automatic approval reviews stay on a model the Gateway can serve.
 
 > **⚠️ Use `gpt-5.5` as the template for non-OpenAI models — not `gpt-5.6-*`.** The `gpt-5.6-*` codex family carries `tool_mode = "code_mode_only"` (the exec-cell / node_repl "code mode" runtime). Only OpenAI's own codex models can drive that surface; a third-party model (Claude, DeepSeek, GLM, Gemini, Grok, Qwen, Kimi) cloned from it gets handed code-mode and **can't emit the calls** — so shell, `apply_patch`, `tool_search`, and MCP tools never reach the model and you're left with only `thinking` / `wait` / `request_user_input`. `gpt-5.5` has `tool_mode = None`: the standard tool surface (plain function tools + freeform `apply_patch`) that these models can actually use. Keep genuine `openai/*` slugs on the `gpt-5.6-*` template.
 
@@ -208,6 +210,7 @@ Each is a standalone profile file (Codex 0.134+ rejects `[profiles.x]` tables in
 | **Requests fail with a format error** | Ensure `wire_api = "responses"` on the provider block, then fully restart. |
 | **Only `thinking` / `wait` / `request_user_input` available — no shell, `apply_patch`, `tool_search`, or MCP tools** | The model was cloned from a `gpt-5.6-*` (code-mode) template. Re-clone from `gpt-5.5` in `build_catalog.py`, rebuild, and restart. See [Adding more models](#adding-more-models). |
 | **`reasoning_content in the thinking mode must be passed back to the API` (GLM)** | GLM's thinking mode requires echoing `reasoning_content` on each turn, which Codex's Responses client doesn't round-trip. Use a non-thinking model (DeepSeek, Kimi, Claude) — this one isn't fixable from config. |
+| **`openai/codex-auto-review` is not supported**, or tool calls end with `stream disconnected before completion` | Re-run `python3 build_catalog.py`, then fully quit and reopen Codex. The generated entries use their own Gateway slug for automatic approval review instead of the unavailable internal reviewer model. Start a new task after restarting. |
 | **Auth errors / key not found** | Run `launchctl getenv MERGE_GATEWAY_API_KEY`. If empty, redo step 2 and fully restart the app. |
 | **`codex` not found when building catalog** | Edit `CODEX_CANDIDATES` at the top of `build_catalog.py` with the full path to your `codex` binary. |
 
