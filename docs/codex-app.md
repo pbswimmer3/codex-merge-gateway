@@ -96,6 +96,6 @@ Codex app updates remove the patch, so the provider selector disappears. Re-run 
 
 Add the slug to `desktop-model-providers.json` and to the `MERGE_MODELS` list in `build_catalog.py`, re-run the builder, then restart the app. List available slugs with `GET /v1/models`.
 
-#### Requests fail with a format error
+#### Tool calls fail, or requests fail with a format error
 
-Add `wire_api = "chat"` to the provider block. The Gateway `/v1/openai` endpoint uses the OpenAI chat-completions format.
+Make sure `wire_api = "chat"` is set on the `[model_providers.merge-gateway]` block. The Gateway `/v1/openai` endpoint uses the OpenAI chat-completions format; without this line Codex defaults to the Responses API. Plain chat may still work, but tool calls (shell, `apply_patch`, MCP) silently fail. Set it, then fully quit and reopen the app.
