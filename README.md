@@ -127,6 +127,8 @@ All slugs are verified against the live Gateway catalog.
 
 ## Adding more models
 
+> **TL;DR:** add the model's `provider/model` slug to `desktop-model-providers.json` and to `MERGE_MODELS` in `build_catalog.py`, re-run `python3 build_catalog.py`, and restart the app.
+
 **1. Find the slug.** List everything your key can reach:
 
 ```bash
