@@ -1,77 +1,24 @@
-# Use Merge Gateway in Codex
+# Codex desktop app (addition to the existing Codex page)
 
-Merge Gateway is OpenAI-compatible, so you can route Codex through it and use any model in the Gateway catalog. This guide covers both the Codex CLI and the Codex desktop app.
+> Drop-in section for docs.merge.dev/merge-gateway/features/use-in-your-ide/codex. It assumes the provider block from **Configure Codex** is already in place and does not repeat it.
 
-## Prerequisites
+## Use in the Codex desktop app
 
-- A Merge Gateway API key (format `mg_...`)
-- macOS with Codex installed (CLI, desktop app, or both)
-- Python 3.9 or newer
+The Codex desktop app does not read custom model providers from `config.toml` in its model picker. Enabling Gateway in the app requires a community patch that adds a provider selector. The patch modifies the Codex app and must be re-applied after app updates.
 
-## Part A: Codex CLI
+This section builds on the `[model_providers.merge-gateway]` block from **Configure Codex** above.
 
-The CLI reads custom providers directly from `~/.codex/config.toml`. No extra tooling is required.
+#### Point Codex at a model catalog
 
-### 1. Define the provider
-
-Add this block to `~/.codex/config.toml`:
+Add this top-level key to `~/.codex/config.toml` so the app can list Gateway models. Replace `<username>` with your macOS username:
 
 ```toml
-[model_providers.merge-gateway]
-name = "Merge Gateway"
-base_url = "https://api-gateway.merge.dev/v1/openai"
-env_key = "MERGE_GATEWAY_API_KEY"
+model_catalog_json = "/Users/<username>/.codex/model-catalogs/custom.json"
 ```
 
-If model requests fail with a request-format error, add `wire_api = "chat"` to the block. The Gateway `/v1/openai` endpoint uses the OpenAI chat-completions format.
+#### Make the API key available to the app
 
-### 2. Set the API key
-
-Export the key in your shell profile (`~/.zshrc`, `~/.bashrc`, or `~/.config/fish/config.fish`):
-
-```bash
-export MERGE_GATEWAY_API_KEY="mg_your_key"
-```
-
-### 3. Create a profile
-
-Codex 0.134 and later reject `[profiles.x]` tables inside `config.toml`. Each profile is a separate file next to `config.toml`. Create `~/.codex/merge_glm.config.toml`:
-
-```toml
-model_provider = "merge-gateway"
-model = "zai/glm-5.2"
-model_reasoning_effort = "medium"
-```
-
-Use any `provider/model` slug from the Gateway catalog for the `model` value.
-
-### 4. Launch
-
-```bash
-codex --profile merge_glm
-```
-
-Requests appear in your Gateway dashboard within seconds.
-
-## Part B: Codex desktop app
-
-> The Codex desktop app does not read custom providers from `config.toml` in its model picker. Enabling this requires a community patch that modifies the Codex app. The patch is maintained outside of OpenAI and must be re-applied after Codex app updates. Treat this path as experimental.
-
-The app needs three things: the provider block from Part A, a provider map the patch reads, and a model catalog that lists your Gateway models.
-
-### 1. Define the provider
-
-Add the `[model_providers.merge-gateway]` block from Part A to `~/.codex/config.toml`, then add this top-level key so Codex loads a catalog that includes your Gateway models. Replace `<YOUR-USERNAME>` with your macOS username:
-
-```toml
-model_catalog_json = "/Users/<YOUR-USERNAME>/.codex/model-catalogs/custom.json"
-```
-
-### 2. Make the API key available to the app
-
-macOS GUI apps do not read `~/.zshrc`, so an `export` line does not reach the app. Set the key at the login-session level with a LaunchAgent so it persists across restarts.
-
-Create `~/Library/LaunchAgents/dev.merge.gateway.env.plist`:
+macOS GUI apps do not read your shell profile, so the `export` from Configure Codex does not reach the app. Set the key at the login-session level with a LaunchAgent at `~/Library/LaunchAgents/dev.merge.gateway.env.plist`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -93,88 +40,62 @@ Create `~/Library/LaunchAgents/dev.merge.gateway.env.plist`:
 </plist>
 ```
 
-Load it and confirm:
+Load it, then confirm the app can see the key:
 
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/dev.merge.gateway.env.plist
 launchctl getenv MERGE_GATEWAY_API_KEY
 ```
 
-### 3. Apply the desktop patch
+#### Apply the desktop patch
 
-Download the patch and run it:
+Download the patch and run it. It backs up the app bundle and injects the provider selector:
 
 ```bash
 python3 patch_chatgpt_providers.py
 ```
 
-The patch backs up the app bundle, injects a provider selector into the model menu, and reads the provider map from the next step.
+#### Map models to the provider
 
-### 4. Install the provider map
-
-Create `~/.codex/desktop-model-providers.json`. This declares the Merge Gateway provider in the app and maps each model slug to it:
+Create `~/.codex/desktop-model-providers.json`. The patch reads this to show the provider and route each slug to it. Add one line per model:
 
 ```json
 {
   "version": 1,
   "default_provider": "openai",
   "providers": [
-    { "id": "openai", "label": "ChatGPT / OpenAI", "description": "Uses your signed-in ChatGPT account" },
-    { "id": "merge-gateway", "label": "Merge Gateway", "description": "Uses [model_providers.merge-gateway] from config.toml" }
+    { "id": "openai", "label": "ChatGPT / OpenAI", "description": "Signed-in ChatGPT account" },
+    { "id": "merge-gateway", "label": "Merge Gateway", "description": "Uses [model_providers.merge-gateway]" }
   ],
   "model_providers": {
     "zai/glm-5.2": "merge-gateway",
-    "anthropic/claude-opus-4-8": "merge-gateway",
-    "google/gemini-3.1-pro-preview": "merge-gateway"
+    "anthropic/claude-opus-4-8": "merge-gateway"
   }
 }
 ```
 
-Add one line under `model_providers` for every model you want to route through Gateway.
+#### Build the model catalog
 
-### 5. Build the model catalog
-
-The catalog makes your Gateway slugs appear as selectable models. Run the catalog builder:
+Run the catalog builder to add your Gateway models to the picker:
 
 ```bash
 python3 build_catalog.py
 ```
 
-The builder exports the bundled Codex catalog, clones an existing entry for each Gateway model so every required field is present, and writes `~/.codex/model-catalogs/custom.json`.
+#### Restart and select
 
-### 6. Restart the app
+Quit the app with `Cmd+Q` and reopen it. The picker shows a Merge Gateway provider with your models. The selected provider applies to new conversations.
 
-Fully quit Codex with `Cmd+Q` and reopen it. The model picker now shows a Merge Gateway provider with your models. The selected provider applies to new conversations only.
+## Caveats (desktop app)
 
-## Adding more models
+#### Re-apply the patch after app updates
 
-1. Find the slug:
+Codex app updates remove the patch, so the provider selector disappears. Re-run `python3 patch_chatgpt_providers.py` and restart the app. Your config, provider map, catalog, and API key are unaffected.
 
-```bash
-curl -s https://api-gateway.merge.dev/v1/openai/models \
-  -H "Authorization: Bearer $MERGE_GATEWAY_API_KEY" \
-  | python3 -m json.tool | grep '"id"'
-```
+#### Adding more models
 
-2. Add the slug to `desktop-model-providers.json` under `model_providers`.
-3. Add an entry to the `MERGE_MODELS` list in `build_catalog.py`.
-4. Re-run `build_catalog.py`, then fully restart the app.
+Add the slug to `desktop-model-providers.json` and to the `MERGE_MODELS` list in `build_catalog.py`, re-run the builder, then restart the app. List available slugs with `GET /v1/models`.
 
-## Updating the Codex app
+#### Requests fail with a format error
 
-Codex app updates overwrite the desktop patch, so the provider selector disappears after an update. Re-apply the patch and restart:
-
-```bash
-python3 patch_chatgpt_providers.py
-```
-
-Your `config.toml`, provider map, catalog, and API key are not affected by app updates. Only the patch needs re-applying.
-
-## Troubleshooting
-
-| Symptom | Fix |
-|---|---|
-| Only OpenAI models appear in the app | The catalog failed to load or `model_catalog_json` points at the wrong path. Check the error toast and re-run `build_catalog.py`. |
-| Provider selector missing | The patch is not applied, or an app update removed it. Re-apply the patch. |
-| Request-format error | Add `wire_api = "chat"` to the provider block. |
-| Auth error or key not found | Run `launchctl getenv MERGE_GATEWAY_API_KEY`. If empty, reload the LaunchAgent and restart the app. |
+Add `wire_api = "chat"` to the provider block. The Gateway `/v1/openai` endpoint uses the OpenAI chat-completions format.
