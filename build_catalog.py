@@ -47,6 +47,11 @@ def find_codex():
 #   function tools + freeform apply_patch) that third-party models can actually
 #   use. So: clone third-party models from gpt-5.5; keep genuine openai/* slugs
 #   on the codex template (real OpenAI models support code mode).
+#
+# Codex may run an automatic approval review in a separate, locked-down session.
+# Its default reviewer model (`openai/codex-auto-review`) is not available from
+# third-party gateways. Each injected model therefore overrides that review model
+# with its own Gateway slug, keeping the review on the same configured provider.
 MERGE_MODELS = [
     {
         "slug": "moonshot/kimi-k3",
@@ -170,6 +175,9 @@ def make_entry(template, spec):
     for k in DESC_KEYS:
         if k in e:
             e[k] = spec["description"]
+    e["auto_review_model_override"] = spec.get(
+        "auto_review_model_override", spec["slug"]
+    )
     return e
 
 
