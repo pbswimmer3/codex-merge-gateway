@@ -9,11 +9,11 @@ model_catalog_json = "/Users/<YOUR-USERNAME>/.codex/model-catalogs/custom.json"
 
 
 # 2) Provider definition — the Merge Gateway endpoint + which env var holds the key.
-#    wire_api = "chat" is REQUIRED: Merge's /v1/openai endpoint is OpenAI
-#    chat-completions style. Without it Codex defaults to the Responses API and
-#    tool calls (shell, apply_patch, MCP) silently fail even though chat works.
+#    wire_api = "responses" is Codex's default; the Gateway supports it (including
+#    tool calls) at /v1/openai/responses. Do NOT use wire_api = "chat" — recent
+#    Codex builds reject it ("wire_api = "chat" is no longer supported").
 [model_providers.merge-gateway]
 name = "Merge Gateway"
 base_url = "https://api-gateway.merge.dev/v1/openai"
 env_key = "MERGE_GATEWAY_API_KEY"
-wire_api = "chat"
+wire_api = "responses"

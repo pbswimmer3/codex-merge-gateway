@@ -52,10 +52,10 @@ model_catalog_json = "/Users/<YOUR-USERNAME>/.codex/model-catalogs/custom.json"
 name = "Merge Gateway"
 base_url = "https://api-gateway.merge.dev/v1/openai"
 env_key = "MERGE_GATEWAY_API_KEY"
-wire_api = "chat"
+wire_api = "responses"
 ```
 
-> `wire_api = "chat"` is required for tool use. The Gateway is chat-completions style; without it Codex defaults to the Responses API and tool calls (shell, `apply_patch`, MCP) silently fail even though plain chat works.
+> `wire_api = "responses"` is Codex's default and the Gateway supports it — including tool calls — at `/v1/openai/responses`. **Do not use `wire_api = "chat"`:** recent Codex builds reject it with `wire_api = "chat" is no longer supported`.
 
 Replace `<YOUR-USERNAME>` with your macOS username (`echo $USER`).
 
@@ -202,8 +202,8 @@ Each is a standalone profile file (Codex 0.134+ rejects `[profiles.x]` tables in
 | **`missing field '...'` when parsing catalog** | Your entry is missing a required field. Make sure it uses a valid `template` slug so `build_catalog.py` can clone a complete entry. |
 | **Merge models don't appear, only OpenAI ones** | Catalog failed to load (see the error toast) or `model_catalog_json` path is wrong. Check the path and re-run `build_catalog.py`. |
 | **Provider selector missing entirely** | Patch not applied or wiped by an update — re-run `patch_chatgpt_providers.py`. |
-| **Tool calls fail (chat works, but shell / `apply_patch` / MCP don't)** | Add `wire_api = "chat"` to the provider block, then fully restart. Codex defaults to the Responses API, which the Gateway doesn't handle for tools. |
-| **Requests fail with a format error** | Add `wire_api = "chat"` to the provider block. |
+| **`wire_api = "chat" is no longer supported`** | Change it to `wire_api = "responses"` (or drop the line — `responses` is the default). Recent Codex builds removed Chat Completions support. |
+| **Requests fail with a format error** | Ensure `wire_api = "responses"` on the provider block, then fully restart. |
 | **Auth errors / key not found** | Run `launchctl getenv MERGE_GATEWAY_API_KEY`. If empty, redo step 2 and fully restart the app. |
 | **`codex` not found when building catalog** | Edit `CODEX_CANDIDATES` at the top of `build_catalog.py` with the full path to your `codex` binary. |
 
